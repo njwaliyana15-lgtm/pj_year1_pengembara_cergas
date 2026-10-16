@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Pengembara Cergas — PJ Tahun 1 V5 Mobile</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:linear-gradient(#c9f3ff,#fff1c8);color:#17324d}
+.wrap{max-width:1100px;margin:auto;padding:12px}
+.bar{background:#fff;border:3px solid #e5d5ff;border-radius:20px;box-shadow:0 7px #d6c6ef;padding:10px 14px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.brand{font-size:20px;font-weight:950}.stats{display:flex;gap:7px;flex-wrap:wrap}.pill{background:#fff7d6;border:2px solid #f2d46c;border-radius:999px;padding:6px 11px;font-weight:900}
+.panel{background:#fff;border:3px solid #e5d5ff;border-radius:22px;box-shadow:0 7px #d6c6ef;padding:18px;margin-top:14px}.center{text-align:center}
+.title{font-size:clamp(30px,6vw,54px);margin:5px 0}.muted{color:#61768a}
+input{width:min(420px,100%);padding:14px;text-align:center;border:3px solid #d9c9f6;border-radius:15px;font-size:20px;font-weight:800;letter-spacing:1px;color:#17324d;outline:none}
+.primary,.secondary{border-radius:15px;padding:12px 20px;font-weight:950;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;pointer-events:auto}.primary{border:0;background:#7c3aed;color:#fff;box-shadow:0 5px #5b21b6}.secondary{background:#fff;border:2px solid #d9c9f6;color:#17324d}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.hidden{display:none!important}
+canvas{display:block;width:100%;background:#83dcff;border:4px solid #fff;border-radius:22px;box-shadow:0 10px #cfc2e8;touch-action:none}
+.controls{display:flex;touch-action:none;justify-content:center;gap:14px;margin:14px;position:relative;z-index:20}.ctrl{width:86px;touch-action:none;height:68px;border:0;border-radius:18px;background:#fff;color:#17324d;box-shadow:0 6px #c7b9dd;font-size:27px;font-weight:950;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}.ctrl:active{transform:translateY(5px);box-shadow:0 1px #c7b9dd}
+.qimg{max-width:560px;margin:10px auto;border:3px solid #eadcff;border-radius:18px;overflow:hidden;background:#eaf9ff}.qimg svg{display:block;width:100%;height:auto}
+.q{font-size:21px;font-weight:950;line-height:1.35;margin:8px auto 12px;max-width:850px}.ans{display:grid;gap:9px;max-width:760px;margin:auto}.ans button{padding:13px;text-align:left;border:3px solid #e0e7ef;border-radius:14px;background:#fff;color:#17324d;font-weight:850;cursor:pointer}.ans button:disabled{cursor:default}.good{background:#dcfce7!important;border-color:#22c55e!important}.bad{background:#fee2e2!important;border-color:#ef4444!important}.feedback{margin:10px auto;padding:11px;border-radius:13px;font-weight:900;max-width:760px}.small{font-size:13px}.note{background:#fff9df;border:2px solid #f0da85;border-radius:13px;padding:10px}
+table{border-collapse:collapse;width:100%;min-width:850px;font-size:14px}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}th{background:#f4efff}.tablewrap{overflow:auto}
+@media(max-width:650px){.brand{font-size:16px}.pill{font-size:13px}.ctrl{width:86px;touch-action:none;height:68px;font-size:30px}.q{font-size:18px}canvas{min-height:280px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="bar"><div class="brand">🏃‍♀️ PENGEMBARA CERGAS</div><div class="stats"><span class="pill">⭐ <b id="score">0</b></span><span class="pill">🪙 <b id="coins">0</b></span><span class="pill">❤️ <b id="lives">3</b></span></div></div>
+
+<section id="startPanel" class="panel center">
+<div style="font-size:70px">🏰✨</div>
+<h1 class="title">PENGEMBARA CERGAS</h1>
+<p class="muted">Pendidikan Jasmani Tahun 1 • Dunia Siap Siaga</p>
+<p>🏃 Lari • ⬆️ Lompat • 🪙 Kumpul syiling • ❓ Jawab cabaran</p>
+<p><b>Nama murid</b></p>
+<input id="studentName" placeholder="Contoh: Nur Aisyah" autocomplete="name">
+<div class="row" style="margin-top:15px"><button class="primary" id="startBtn">🚀 MULA</button><button class="secondary" id="recordsBtn">📋 REKOD</button></div>
+<p class="small note">Laptop: ← → / A D untuk bergerak, SPACE atau ↑ untuk lompat.<br>Telefon: guna ◀ ⬆ ▶.</p>
+</section>
+
+<section id="gamePanel" class="hidden">
+<canvas id="game" width="960" height="540"></canvas>
+<div class="controls"><button class="ctrl" id="leftBtn">◀</button><button class="ctrl" id="jumpBtn">⬆</button><button class="ctrl" id="rightBtn">▶</button></div>
+<p class="small center">💡 Sentuh <b>?</b> untuk soalan. <b>Jangan jatuh!</b> Lubang hanya mengurangkan nyawa.</p>
+</section>
+
+<section id="questionPanel" class="panel hidden center"><div id="questionContent"></div></section>
+<section id="finishPanel" class="panel hidden center"></section>
+
+<section id="recordsPanel" class="panel hidden">
+<h2>📋 Rekod Permainan</h2><p class="small">Rekod disimpan pada browser/peranti ini. Boleh muat turun CSV untuk markah kelas.</p>
+<div class="row" style="justify-content:flex-start"><button class="primary" id="downloadCsv">⬇️ CSV</button><button class="secondary" id="clearRecords">Padam</button><button class="secondary" id="closeRecords">Tutup</button></div>
+<p class="small note">Dalam rekod, <b>Soalan betul</b> menunjukkan nombor soalan yang murid jawab betul, manakala <b>Soalan salah</b> menunjukkan nombor soalan yang salah.</p><div class="tablewrap"><table><thead><tr><th>Nama</th><th>Markah</th><th>Syiling</th><th>Nyawa</th><th>Betul</th><th>Soalan betul</th><th>Soalan salah</th><th>Status</th><th>Masa</th></tr></thead><tbody id="recordsBody"></tbody></table></div>
+</section>
+</div>
+
+<script>
+(()=> {
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),W=960,H=540;
+let keys={left:false,right:false},running=false,last=0,camera=0;
+let studentName='',score=0,coins=0,lives=3,correct=0,correctQuestions=[],wrongQuestions=[];
+let particles=[],stars=0,questionBusy=false;
+const GRAV=1250,SPEED=250,JUMP=-555;
+
+let player={x:70,y:390,w:36,h:52,vx:0,vy:0,onGround:false,face:1,step:0};
+const questions=[
+ {img:'arms',q:'Selepas aktiviti fizikal, regangan membantu badan…',a:['Kembali tenang','Menjadi lebih letih','Terus berlari tanpa henti'],c:0},
+ {img:'leg',q:'Pergerakan dalam gambar perlu dilakukan dengan…',a:['Perlahan dan terkawal','Melantun dengan kuat','Menolak kawan'],c:0},
+ {q:'Jika terasa sakit ketika melakukan regangan, kita patut…',a:['Berhenti dan beritahu guru','Teruskan dengan lebih kuat','Sembunyikannya'],c:0},
+ {q:'Regangan selepas aktiviti membantu…',a:['Kelonggaran otot','Membuat badan kotor','Mengganggu rakan'],c:0},
+ {img:'side',q:'Gambar menunjukkan regangan pada bahagian…',a:['Sisi badan','Mata','Telinga'],c:0},
+ {q:'Apakah yang TIDAK patut dilakukan ketika regangan?',a:['Bergerak perlahan','Menahan posisi dengan selesa','Melantun berulang kali'],c:2},
+ {q:'Sebelum melakukan aktiviti fizikal, kita perlu…',a:['Bersedia dan melakukan pemanasan badan','Terus berlari laju','Menolak rakan'],c:0},
+ {q:'Selepas aktiviti fizikal, kita boleh…',a:['Bertenang dan melakukan regangan','Terus melompat tanpa henti','Bergaduh dengan rakan'],c:0}
+];
+
+// Every question block is safely above a platform — never in a hole.
+const platforms=[
+{x:0,y:465,w:720,h:75},{x:850,y:430,w:430,h:110},{x:1410,y:465,w:600,h:75},
+{x:2140,y:420,w:430,h:120},{x:2700,y:465,w:650,h:75},{x:3500,y:420,w:430,h:120},{x:4030,y:465,w:650,h:75},{x:4760,y:420,w:520,h:120}
+];
+const gaps=[[720,850],[1280,1410],[2010,2140],[2570,2700],[3350,3500],[3930,4030],[4680,4760]];
+const qBlocks=[
+{x:500,y:355,w:54,h:54,q:0},{x:1030,y:300,w:54,h:54,q:1},{x:1660,y:355,w:54,h:54,q:2},
+{x:2310,y:310,w:54,h:54,q:3},{x:2920,y:355,w:54,h:54,q:4},{x:3180,y:355,w:54,h:54,q:5},
+{x:3660,y:310,w:54,h:54,q:6},{x:4250,y:355,w:54,h:54,q:7}
+];
+const coinsList=[
+{x:170,y:390},{x:250,y:335},{x:330,y:390},{x:420,y:330},{x:600,y:390},
+{x:930,y:350},{x:1100,y:285},{x:1190,y:350},
+{x:1510,y:390},{x:1600,y:330},{x:1770,y:390},{x:1900,y:335},
+{x:2200,y:350},{x:2450,y:350},{x:2820,y:390},{x:3000,y:330},{x:3300,y:390},
+{x:3570,y:350},{x:3780,y:300},{x:4100,y:390},{x:4300,y:330},{x:4520,y:390},{x:4850,y:350},{x:5050,y:300}
+];
+const castle={x:5070,y:285,w:145,h:180};
+
+function updateStats(){scoreEl.textContent=score;coinsEl.textContent=coins;livesEl.textContent=lives}
+const scoreEl=document.getElementById('score'),coinsEl=document.getElementById('coins'),livesEl=document.getElementById('lives');
+
+function resetGame(){
+ score=0;coins=0;lives=3;correct=0;correctQuestions=[];wrongQuestions=[];camera=0;questionBusy=false;particles=[];stars=0;
+ player={x:70,y:400,w:36,h:52,vx:0,vy:0,onGround:false,face:1,step:0};
+ coinsList.forEach(c=>c.got=false);qBlocks.forEach(b=>b.open=false);
+ updateStats();running=true;last=performance.now();requestAnimationFrame(loop);
+}
+
+function spawn(x,y,n=10){
+ for(let i=0;i<n;i++) particles.push({x,y,vx:(Math.random()-.5)*180,vy:(Math.random()-.8)*190,life:.55+Math.random()*.5,r:3+Math.random()*4});
+}
+function rectHit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+
+function update(dt){
+ player.vx=(keys.left?-SPEED:0)+(keys.right?SPEED:0);
+ if(player.vx!==0)player.face=player.vx>0?1:-1;
+ player.vy+=GRAV*dt;
+ player.x+=player.vx*dt;
+ player.y+=player.vy*dt;
+ player.onGround=false;
+ player.step+=dt*(Math.abs(player.vx)>0?9:3);
+
+ // Solid platforms.
+ for(const p of platforms){
+   if(player.x+player.w>p.x&&player.x<p.x+p.w&&player.y+player.h>=p.y&&player.y+player.h<=p.y+30&&player.vy>=0){
+      player.y=p.y-player.h;player.vy=0;player.onGround=true;
+   }
+ }
+ // Falling into a gap only costs a life. It NEVER opens a question.
+ if(player.y>590){
+   lives--;spawn(player.x,500,18);updateStats();
+   if(lives<=0){endGame(false,'Nyawa habis. Cuba lagi dan gunakan butang lompat untuk melepasi lubang.');return}
+   player.x=Math.max(40,player.x-260);player.y=300;player.vy=0;
+ }
+ player.x=Math.max(0,Math.min(5200,player.x));
+ camera=Math.max(0,Math.min(4300,player.x-250));
+
+ // Coins.
+ for(const c of coinsList){
+   if(!c.got&&Math.abs(player.x+18-c.x)<27&&Math.abs(player.y+25-c.y)<34){
+      c.got=true;coins++;score+=5;spawn(c.x,c.y,8);updateStats();
+   }
+ }
+ // Questions ONLY when the player actually touches the question block.
+ for(const b of qBlocks){
+   if(!b.open&&rectHit(player,{x:b.x-8,y:b.y-8,w:b.w+16,h:b.h+16})){openQuestion(b.q);break}
+ }
+ if(qBlocks.every(b=>b.open)&&player.x>castle.x-35){endGame(true,'Semua cabaran selesai dan kamu berjaya sampai ke istana!');return}
+ particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.life-=dt});
+ particles=particles.filter(p=>p.life>0);
+}
+
+function draw(){
+ const t=performance.now()/1000;
+ const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#72d9ff');sky.addColorStop(.55,'#b9f0ff');sky.addColorStop(1,'#fff0bd');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+
+ // Sun + animated clouds
+ ctx.fillStyle='#ffd84d';ctx.beginPath();ctx.arc(825,72,38,0,Math.PI*2);ctx.fill();
+ for(let i=0;i<7;i++){
+   let xx=((i*180+t*12-camera*.10)%1120)-80, yy=75+(i%3)*35;
+   ctx.fillStyle='rgba(255,255,255,.88)';
+   ctx.beginPath();ctx.arc(xx,yy,24,0,Math.PI*2);ctx.arc(xx+28,yy-10,32,0,Math.PI*2);ctx.arc(xx+63,yy,24,0,Math.PI*2);ctx.fill();
+ }
+ // Distant mountains / trees
+ ctx.fillStyle='#86cf9b';
+ for(let i=0;i<9;i++){let xx=i*150-(camera*.18%150);ctx.beginPath();ctx.arc(xx,450,145,Math.PI,0);ctx.fill()}
+ ctx.fillStyle='#54b978';
+ for(let i=0;i<15;i++){let xx=i*110-(camera*.3%110);ctx.fillRect(xx,400,12,70);ctx.beginPath();ctx.arc(xx+6,390,32,0,Math.PI*2);ctx.fill()}
+
+ // Gaps with animated water
+ gaps.forEach(g=>{
+   const xx=g[0]-camera,ww=g[1]-g[0];
+   ctx.fillStyle='#2fc2ee';ctx.fillRect(xx,465,ww,75);
+   for(let wx=xx;wx<xx+ww;wx+=35){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(wx,485,12,0,Math.PI);ctx.stroke()}
+ });
+
+ // Platforms
+ platforms.forEach(p=>{
+   const xx=p.x-camera;
+   ctx.fillStyle='#9b603b';ctx.fillRect(xx,p.y,p.w,p.h);
+   ctx.fillStyle='#54c65b';ctx.fillRect(xx,p.y,p.w,16);
+   ctx.fillStyle='#75e56e';ctx.fillRect(xx,p.y, p.w,5);
+   for(let bx=xx+10;bx<xx+p.w;bx+=42){ctx.fillStyle='#7d4d35';ctx.fillRect(bx,p.y+28,27,18)}
+ });
+
+ // Question blocks with bounce
+ qBlocks.forEach((b,i)=>{
+   const xx=b.x-camera, yy=b.y+(b.open?0:Math.sin(t*4+i)*3);
+   ctx.fillStyle=b.open?'#9aa3ad':'#ffbd25';ctx.fillRect(xx,yy,b.w,b.h);
+   ctx.strokeStyle='#a56c00';ctx.lineWidth=5;ctx.strokeRect(xx,yy,b.w,b.h);
+   ctx.fillStyle='#ffe78b';ctx.fillRect(xx+7,yy+7,b.w-14,7);
+   ctx.fillStyle='#fff';ctx.font='950 34px system-ui';ctx.textAlign='center';ctx.fillText(b.open?'✓':'?',xx+b.w/2,yy+39);
+   if(!b.open){ctx.fillStyle='#d99100';ctx.fillRect(xx+8,yy+b.h-10,b.w-16,5)}
+ });
+
+ // Coins spinning
+ coinsList.forEach((c,i)=>{
+   if(c.got)return;const xx=c.x-camera,yy=c.y+Math.sin(t*5+i)*5;
+   const squish=.55+.45*Math.abs(Math.cos(t*5+i));
+   ctx.save();ctx.translate(xx,yy);ctx.scale(squish,1);
+   ctx.fillStyle='#ffd21f';ctx.beginPath();ctx.arc(0,0,15,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='#d99b00';ctx.lineWidth=3;ctx.stroke();
+   ctx.fillStyle='#fff5a3';ctx.beginPath();ctx.arc(-5,-5,4,0,Math.PI*2);ctx.fill();ctx.restore();
+ });
+
+ // Castle
+ drawCastle(castle.x-camera,castle.y);
+
+ // Player — original explorer with idle/run animation
+ drawPlayer(player.x-camera,player.y,t);
+
+ // particles
+ particles.forEach(a=>{ctx.globalAlpha=Math.max(0,a.life);ctx.fillStyle='#ffd21f';ctx.beginPath();ctx.arc(a.x-camera,a.y,a.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1});
+
+ // HUD hint
+ ctx.fillStyle='rgba(255,255,255,.86)';ctx.roundRect(16,16,390,48,14);ctx.fill();
+ ctx.fillStyle='#17324d';ctx.font='900 16px system-ui';ctx.textAlign='left';ctx.fillText('🪙 Syiling +5   ❓ Cabaran   🏰 Istana',30,46);
+}
+function drawCastle(x,y){
+ ctx.fillStyle='#8b5cf6';ctx.fillRect(x+35,y+70,78,125);ctx.fillRect(x,y+42,32,153);ctx.fillRect(x+116,y+42,32,153);
+ ctx.fillStyle='#f0d6ff';ctx.fillRect(x+60,y+125,28,70);
+ ctx.fillStyle='#ffd21f';ctx.beginPath();ctx.moveTo(x,y+42);ctx.lineTo(x+16,y+8);ctx.lineTo(x+32,y+42);ctx.fill();ctx.beginPath();ctx.moveTo(x+116,y+42);ctx.lineTo(x+132,y+8);ctx.lineTo(x+148,y+42);ctx.fill();
+ ctx.fillStyle='#fff';ctx.font='950 16px system-ui';ctx.textAlign='center';ctx.fillText('TAMAT',x+74,y+108);
+}
+function drawPlayer(x,y,t){
+ const bob=player.onGround?Math.sin(t*10)*1.5:0, run=Math.abs(player.vx)>0?Math.sin(player.step)*4:0;
+ ctx.save();ctx.translate(x+18,y+bob);ctx.scale(player.face,1);
+ ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.ellipse(0,53,22,6,0,0,Math.PI*2);ctx.fill();
+ // backpack
+ ctx.fillStyle='#f59e0b';ctx.fillRect(-17,14,9,24);
+ // head + hair
+ ctx.fillStyle='#d9a17c';ctx.beginPath();ctx.arc(0,10,12,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#633b22';ctx.beginPath();ctx.arc(0,3,12,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(-12,3,24,6);
+ // body
+ ctx.fillStyle='#ef4444';ctx.fillRect(-12,22,24,23);
+ // arms
+ ctx.strokeStyle='#d9a17c';ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-10,27);ctx.lineTo(-19,38+run);ctx.moveTo(10,27);ctx.lineTo(19,38-run);ctx.stroke();
+ // legs
+ ctx.strokeStyle='#2563eb';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(-6,44);ctx.lineTo(-10-run/2,57);ctx.moveTo(6,44);ctx.lineTo(10+run/2,57);ctx.stroke();
+ ctx.strokeStyle='#17324d';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(-13-run/2,58);ctx.lineTo(-2-run/2,58);ctx.moveTo(4+run/2,58);ctx.lineTo(16+run/2,58);ctx.stroke();
+ ctx.restore();
+}
+
+function svgIllustration(type){
+ let body='';
+ if(type==='arms') body=`
+ <circle cx="300" cy="55" r="25" fill="#efc09a"/>
+ <path d="M270 85 Q300 72 330 85 L345 165 L255 165 Z" fill="#ef4444"/>
+ <path d="M270 100 L165 65 M330 100 L435 65" stroke="#efc09a" stroke-width="18" stroke-linecap="round"/>
+ <path d="M270 160 L240 215 M330 160 L360 215" stroke="#2563eb" stroke-width="18" stroke-linecap="round"/>
+ <path d="M180 130 Q110 90 145 38 M420 130 Q490 90 455 38" fill="none" stroke="#ec4899" stroke-width="7"/>
+ <text x="300" y="245" text-anchor="middle" font-size="19" font-weight="800" fill="#17324d">Regangan tangan</text>`;
+ if(type==='leg') body=`
+ <circle cx="305" cy="50" r="25" fill="#d7a27d"/>
+ <path d="M275 80 Q305 68 335 80 L345 155 L260 155 Z" fill="#38bdf8"/>
+ <path d="M275 95 L210 120 L160 145" stroke="#d7a27d" stroke-width="17" stroke-linecap="round"/>
+ <path d="M330 155 L370 190 L430 175 M265 155 L230 195 L175 205" stroke="#2563eb" stroke-width="18" stroke-linecap="round"/>
+ <path d="M420 145 Q480 150 485 205" fill="none" stroke="#f97316" stroke-width="7"/>
+ <text x="300" y="245" text-anchor="middle" font-size="19" font-weight="800" fill="#17324d">Regangan kaki</text>`;
+ if(type==='side') body=`
+ <circle cx="300" cy="50" r="25" fill="#efc09a"/>
+ <path d="M275 80 Q305 68 335 80 L340 165 L260 165 Z" fill="#fb923c"/>
+ <path d="M275 95 L215 60 L175 40 M330 95 L385 120 M265 160 L230 215 M330 160 L365 215" stroke="#2563eb" stroke-width="18" stroke-linecap="round"/>
+ <path d="M365 85 Q450 65 475 120" fill="none" stroke="#7c3aed" stroke-width="7"/>
+ <text x="300" y="245" text-anchor="middle" font-size="19" font-weight="800" fill="#17324d">Regangan sisi badan</text>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 260"><rect width="600" height="260" rx="18" fill="#e9f8ff"/><rect y="215" width="600" height="45" fill="#d8f0c8"/>${body}</svg>`;
+}
+
+function openQuestion(index){
+ if(questionBusy||qBlocks[index].open)return;
+ questionBusy=true;running=false;
+ const q=questions[index];
+ questionContent.innerHTML=`<span class="pill">❓ CABARAN ${index+1} / ${questions.length}</span><div class="q">${q.q}</div>${q.img?`<div class="qimg">${svgIllustration(q.img)}</div>`:''}<div class="ans">${q.a.map((a,n)=>`<button data-n="${n}">${String.fromCharCode(65+n)}. ${a}</button>`).join('')}</div><div id="feedback"></div>`;
+ questionPanel.classList.remove('hidden');
+ questionContent.querySelectorAll('.ans button').forEach(b=>b.onclick=()=>answerQuestion(index,Number(b.dataset.n)));
+}
+function answerQuestion(index,n){
+ const q=questions[index],buttons=[...questionContent.querySelectorAll('.ans button')];
+ buttons.forEach(b=>b.disabled=true);
+ if(n===q.c){
+   buttons[n].classList.add('good');correct++;correctQuestions.push(index+1);score+=20;qBlocks[index].open=true;spawn(qBlocks[index].x,qBlocks[index].y,18);
+   feedback.innerHTML='<div class="feedback" style="background:#dcfce7;color:#166534">🎉 Betul! Blok dibuka dan laluan diteruskan. +20 markah!</div>';
+ }else{
+   buttons[n].classList.add('bad');buttons[q.c].classList.add('good');wrongQuestions.push(index+1);lives--;score=Math.max(0,score-5);
+   feedback.innerHTML='<div class="feedback" style="background:#fee2e2;color:#991b1b">💔 Belum tepat. Nyawa berkurang 1. Jawapan yang betul ditunjukkan.</div>';
+ }
+ updateStats();
+ setTimeout(()=>{
+   questionPanel.classList.add('hidden');questionBusy=false;
+   if(lives<=0){endGame(false,'Nyawa habis. Cuba semula dan gunakan lompat untuk melepasi lubang.');}
+   else{running=true;last=performance.now();requestAnimationFrame(loop);}
+ },1100);
+}
+
+function loop(t){
+ if(!running)return;
+ const dt=Math.min(.032,(t-last)/1000||.016);last=t;update(dt);draw();requestAnimationFrame(loop);
+}
+function endGame(win,msg){
+ running=false;saveRecord(win?'Tamat':'Gagal');
+ gamePanel.classList.add('hidden');finishPanel.classList.remove('hidden');
+ finishPanel.innerHTML=`<div style="font-size:64px">${win?'🏆':'💪'}</div><h2>${win?'TAHNIAH, WIRA CERGAS!':'CUBA LAGI!'}</h2><p>${msg}</p><div class="row"><span class="pill">⭐ ${score}</span><span class="pill">🪙 ${coins}</span><span class="pill">❤️ ${Math.max(lives,0)}</span><span class="pill">✅ ${correct}/8</span></div><p class="small">Syiling +5 • Jawapan betul +20 • Jawapan salah -5</p><div class="row"><button class="primary" id="againBtn">🔁 Main Lagi</button><button class="secondary" id="recBtn">📋 Rekod</button></div>`;
+ document.getElementById('againBtn').onclick=()=>{finishPanel.classList.add('hidden');gamePanel.classList.remove('hidden');resetGame()};
+ document.getElementById('recBtn').onclick=()=>{finishPanel.classList.add('hidden');recordsPanel.classList.remove('hidden');renderRecords()};
+}
+function saveRecord(status){
+ const d=JSON.parse(localStorage.getItem('pengembaraCergasV2')||'[]');
+ d.push({name:studentName||'---',score,coins,lives:Math.max(lives,0),correct,correctQuestions:correctQuestions.slice(),wrongQuestions:wrongQuestions.slice(),status,time:new Date().toLocaleString('ms-MY')});
+ localStorage.setItem('pengembaraCergasV2',JSON.stringify(d));
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function renderRecords(){
+ const d=JSON.parse(localStorage.getItem('pengembaraCergasV2')||'[]');
+ recordsBody.innerHTML=d.length?d.slice().reverse().map(r=>`<tr><td>${esc(r.name)}</td><td>${r.score}</td><td>${r.coins}</td><td>${r.lives}</td><td>${r.correct}/8</td><td>${r.correctQuestions?.join(', ')||'-'}</td><td>${r.wrongQuestions?.join(', ')||'-'}</td><td>${r.status}</td><td>${esc(r.time)}</td></tr>`).join(''):'<tr><td colspan="9">Belum ada rekod.</td></tr>';
+}
+
+const studentNameInput=document.getElementById('studentName');
+const startBtn=document.getElementById('startBtn');
+const recordsBtn=document.getElementById('recordsBtn');
+const closeRecords=document.getElementById('closeRecords');
+const clearRecords=document.getElementById('clearRecords');
+const downloadCsv=document.getElementById('downloadCsv');
+const startPanel=document.getElementById('startPanel');
+const gamePanel=document.getElementById('gamePanel');
+const questionPanel=document.getElementById('questionPanel');
+const finishPanel=document.getElementById('finishPanel');
+const recordsPanel=document.getElementById('recordsPanel');
+const questionContent=document.getElementById('questionContent');
+const recordsBody=document.getElementById('recordsBody');
+let startHandledAt=0;
+function beginGame(){
+ const now=Date.now();
+ if(now-startHandledAt<400)return;
+ startHandledAt=now;
+ const n=studentNameInput.value.trim();
+ if(n.length<2){alert('Sila masukkan nama murid.');studentNameInput.focus();return}
+ studentName=n;
+ startPanel.classList.add('hidden');
+ gamePanel.classList.remove('hidden');
+ resetGame();
+}
+// Mobile-safe: handle the tap directly instead of triggering a synthetic click.
+startBtn.addEventListener('touchend',e=>{e.preventDefault();beginGame();},{passive:false});
+startBtn.addEventListener('click',beginGame);
+recordsBtn.onclick=()=>{recordsPanel.classList.remove('hidden');renderRecords()};
+closeRecords.onclick=()=>recordsPanel.classList.add('hidden');
+clearRecords.onclick=()=>{if(confirm('Padam semua rekod?')){localStorage.removeItem('pengembaraCergasV2');renderRecords()}};
+downloadCsv.onclick=()=>{
+ const d=JSON.parse(localStorage.getItem('pengembaraCergasV2')||'[]');if(!d.length){alert('Belum ada rekod.');return}
+ const rows=[['Nama','Markah','Syiling','Nyawa','Betul','Soalan betul','Soalan salah','Status','Masa'],...d.map(r=>[r.name,r.score,r.coins,r.lives,r.correct+'/8',(r.correctQuestions||[]).join(' | ')||'-',(r.wrongQuestions||[]).join(' | ')||'-',r.status,r.time])];
+ const blob=new Blob(['\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rekod_pengembara_cergas.csv';a.click();
+};
+
+// Keyboard controls
+window.addEventListener('keydown',e=>{
+ const tag=(e.target&&e.target.tagName)||'';
+ if(tag==='INPUT'||tag==='TEXTAREA'||e.target.isContentEditable) return;
+ if(e.code==='ArrowLeft'||e.code==='KeyA'){keys.left=true;e.preventDefault()}
+ if(e.code==='ArrowRight'||e.code==='KeyD'){keys.right=true;e.preventDefault()}
+ if((e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')&&running&&!questionBusy&&player.onGround){player.vy=JUMP;player.onGround=false;spawn(player.x+18,player.y+50,6);e.preventDefault()}
+});
+window.addEventListener('keyup',e=>{if(e.code==='ArrowLeft'||e.code==='KeyA')keys.left=false;if(e.code==='ArrowRight'||e.code==='KeyD')keys.right=false});
+
+function holdButton(el,prop){
+  let active=false;
+  const press=e=>{ if(e.cancelable) e.preventDefault(); active=true; keys[prop]=true; };
+  const release=e=>{ if(e.cancelable) e.preventDefault(); active=false; keys[prop]=false; };
+  el.addEventListener('touchstart',press,{passive:false});
+  el.addEventListener('touchend',release,{passive:false});
+  el.addEventListener('touchcancel',release,{passive:false});
+  el.addEventListener('pointerdown',e=>{ if(e.pointerType!=='touch') press(e); },{passive:false});
+  el.addEventListener('pointerup',e=>{ if(e.pointerType!=='touch') release(e); },{passive:false});
+  el.addEventListener('pointercancel',e=>{ if(e.pointerType!=='touch') release(e); },{passive:false});
+  el.addEventListener('click',()=>{
+    if(active) return;
+    keys[prop]=true;
+    setTimeout(()=>keys[prop]=false,180);
+  });
+}
+holdButton(leftBtn,'left');
+holdButton(rightBtn,'right');
+// Extra mobile fallback.
+['leftBtn','rightBtn'].forEach(id=>{
+ const el=document.getElementById(id);
+ el.addEventListener('touchstart',e=>{e.preventDefault();keys[id==='leftBtn'?'left':'right']=true;},{passive:false});
+ el.addEventListener('touchend',e=>{e.preventDefault();keys[id==='leftBtn'?'left':'right']=false;},{passive:false});
+});
+
+let lastJumpTouch=0;
+function doJump(e){
+  if(e && e.cancelable) e.preventDefault();
+  if(e) e.stopPropagation();
+  const now=Date.now();
+  if(now-lastJumpTouch<120) return;
+  lastJumpTouch=now;
+  if(running&&!questionBusy&&player.onGround){
+    player.vy=JUMP; player.onGround=false; spawn(player.x+18,player.y+50,6);
+  }
+}
+jumpBtn.addEventListener('touchstart',doJump,{passive:false});
+jumpBtn.addEventListener('pointerdown',e=>{ if(e.pointerType!=='touch') doJump(e); },{passive:false});
+jumpBtn.addEventListener('click',()=>doJump());
+
+
+})();
+</script>
+</body>
+</html>
